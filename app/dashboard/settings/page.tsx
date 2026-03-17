@@ -68,6 +68,7 @@ export default function SettingsPage() {
     }
 
     const exchangeCodeForWhatsAppTokens = async (code: string) => {
+        console.log('Exchanging code for token. Current origin:', window.location.origin);
         try {
             const res = await fetch('/api/whatsapp/auth', {
                 method: 'POST',

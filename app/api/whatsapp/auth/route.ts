@@ -25,8 +25,9 @@ export async function POST(req: Request) {
         }
 
         // 1. Exchange the code for an Access Token
+        // When using the FB JS SDK with response_type: 'code', we MUST pass an empty redirect_uri
         const tokenRes = await fetch(
-            `https://graph.facebook.com/v22.0/oauth/access_token?client_id=${appId}&client_secret=${appSecret}&code=${code}`,
+            `https://graph.facebook.com/v22.0/oauth/access_token?client_id=${appId}&client_secret=${appSecret}&code=${code}&redirect_uri=`,
             { method: 'GET' }
         )
 

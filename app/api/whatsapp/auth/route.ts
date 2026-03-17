@@ -35,10 +35,18 @@ export async function POST(req: Request) {
         const tokenRes = await fetch(metaUrl.toString(), { method: 'GET' })
 
         const tokenData = await tokenRes.json()
+        console.log('Full Meta Token Response:', JSON.stringify(tokenData))
 
         if (tokenData.error) {
             console.error('Meta Token Error:', tokenData.error)
-            return NextResponse.json({ error: 'Gagal mendapatkan token daripada Meta.' }, { status: 400 })
+            // Surface the exact error for debugging
+            const fbError = tokenData.error.message || 'Meta OAuth Error'
+            const fbErrorType = tokenData.error.type || 'Unknown'
+            const fbErrorCode = tokenData.error.code || 'No code'
+            return NextResponse.json({ 
+                error: `Meta Error: ${fbError} (${fbErrorType} - ${fbErrorCode})`,
+                debug: tokenData.error
+            }, { status: 400 })
         }
 
         const accessToken = tokenData.access_token

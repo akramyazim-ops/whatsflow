@@ -45,16 +45,18 @@ export async function POST(req: Request) {
         // - Save the token, WABA ID, and Phone Number ID to the database securely.
         
         // Example profile update (assuming you fetched the actual phone ID):
-        /*
-        await supabase
+        const { error: updateError } = await supabase
             .from('profiles')
             .update({ 
                 whatsapp_access_token: accessToken,
-                // whatsapp_number_id: fetchedNumberId,
-                // waba_id: fetchedWabaId
+                // whatsapp_phone_number_id: fetchedNumberId,
+                // whatsapp_waba_id: fetchedWabaId
             })
             .eq('id', user.id)
-        */
+
+        if (updateError) {
+            console.error('Failed to update profile with token:', updateError)
+        }
        
        // Note for the user: To fully complete this, specific permissions and app review are required on Meta's side.
 

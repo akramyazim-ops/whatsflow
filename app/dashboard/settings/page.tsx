@@ -72,7 +72,10 @@ export default function SettingsPage() {
             const res = await fetch('/api/whatsapp/auth', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code })
+                body: JSON.stringify({ 
+                    code,
+                    redirectUri: window.location.origin
+                })
             })
             
             if (res.ok) {

@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 
 export async function POST(req: Request) {
     try {
-        const { code } = await req.json()
+        const { code, redirectUri } = await req.json()
 
         if (!code) {
             return NextResponse.json({ error: 'Sila berikan kod dari Meta.' }, { status: 400 })
@@ -25,11 +25,14 @@ export async function POST(req: Request) {
         }
 
         // 1. Exchange the code for an Access Token
-        // When using the FB JS SDK with response_type: 'code', we MUST pass an empty redirect_uri
-        const tokenRes = await fetch(
-            `https://graph.facebook.com/v22.0/oauth/access_token?client_id=${appId}&client_secret=${appSecret}&code=${code}&redirect_uri=`,
-            { method: 'GET' }
-        )
+        // When using the FB JS SDK with response_type: 'code', the redirect_uri should match the origin
+        const metaUrl = new URL('https://graph.facebook.com/v22.0/oauth/access_token')
+        metaUrl.searchParams.append('client_id', appId)
+        metaUrl.searchParams.append('client_secret', appSecret)
+        metaUrl.searchParams.append('code', code)
+        metaUrl.searchParams.append('redirect_uri', redirectUri || '')
+
+        const tokenRes = await fetch(metaUrl.toString(), { method: 'GET' })
 
         const tokenData = await tokenRes.json()
 

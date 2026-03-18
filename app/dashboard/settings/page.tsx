@@ -182,6 +182,9 @@ export default function SettingsPage() {
                                             </>
                                         )}
                                     </button>
+                                    <div className="mt-4 p-2 bg-slate-50 rounded border border-slate-100 text-[10px] text-slate-400 font-mono break-all text-left w-full">
+                                        DEBUG: {typeof window !== 'undefined' ? window.location.origin : 'Loading...'}
+                                    </div>
                                 </>
                             )}
                         </div>

@@ -24,32 +24,48 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Sistem belum dikonfigurasi sepenuhnya.' }, { status: 500 })
         }
 
-        // 1. Exchange the code for an Access Token
-        // When using the FB JS SDK with response_type: 'code', the redirect_uri should match the origin exactly
-        // We normalize it by removing the trailing slash if present
-        const normalizedRedirectUri = redirectUri ? redirectUri.replace(/\/$/, '') : ''
+        console.log('--- Meta Exchange Start ---')
+        console.log('App ID:', appId)
+        console.log('Redirect URI Recvd:', redirectUri)
         
-        const metaUrl = new URL('https://graph.facebook.com/v22.0/oauth/access_token')
-        metaUrl.searchParams.append('client_id', appId)
-        metaUrl.searchParams.append('client_secret', appSecret)
-        metaUrl.searchParams.append('code', code)
-        metaUrl.searchParams.append('redirect_uri', normalizedRedirectUri)
+        const normalizedRedirectUri = redirectUri ? redirectUri.replace(/\/$/, '') : ''
+        console.log('Normalized URI:', normalizedRedirectUri)
+        
+        const performExchange = async (rUri: string) => {
+            const metaUrl = new URL('https://graph.facebook.com/v22.0/oauth/access_token')
+            metaUrl.searchParams.append('client_id', appId)
+            metaUrl.searchParams.append('client_secret', appSecret)
+            metaUrl.searchParams.append('code', code)
+            if (rUri) metaUrl.searchParams.append('redirect_uri', rUri)
+            
+            console.log(`Trying exchange with redirect_uri: "${rUri}"`)
+            return await fetch(metaUrl.toString(), { method: 'GET' })
+        }
 
-        console.log('Exchanging Meta code with redirect_uri:', normalizedRedirectUri)
-        const tokenRes = await fetch(metaUrl.toString(), { method: 'GET' })
+        let tokenRes = await performExchange(normalizedRedirectUri)
+        let tokenData = await tokenRes.json()
+        console.log('Attempt 1 Response:', JSON.stringify(tokenData))
 
-        const tokenData = await tokenRes.json()
-        console.log('Full Meta Token Response:', JSON.stringify(tokenData))
+        // Fallback: Some Meta SDK implementations require an empty redirect_uri for code exchange
+        if (tokenData.error && (tokenData.error.code === 191 || tokenData.error.code === 100)) {
+            console.log('Attempt 1 failed with domain/parameter error. Trying Attempt 2 with empty redirect_uri...')
+            tokenRes = await performExchange('')
+            tokenData = await tokenRes.json()
+            console.log('Attempt 2 Response:', JSON.stringify(tokenData))
+        }
 
         if (tokenData.error) {
-            console.error('Meta Token Error:', tokenData.error)
-            // Surface the exact error for debugging
+            console.error('Final Meta Token Error:', tokenData.error)
             const fbError = tokenData.error.message || 'Meta OAuth Error'
             const fbErrorType = tokenData.error.type || 'Unknown'
             const fbErrorCode = tokenData.error.code || 'No code'
             return NextResponse.json({ 
                 error: `Meta Error: ${fbError} (${fbErrorType} - ${fbErrorCode})`,
-                debug: tokenData.error
+                debug: {
+                    ...tokenData.error,
+                    sent_redirect_uri: normalizedRedirectUri,
+                    detected_app_id: appId
+                }
             }, { status: 400 })
         }
 
